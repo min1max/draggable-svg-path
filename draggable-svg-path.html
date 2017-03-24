@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Drag svg path</title>
+
+	<style>
+body {
+  margin: 0;
+}
+
+svg {
+  display: block;
+  margin: 0 auto;
+  width: 100vmin;
+  height: 100vmin;
+  background: #ded6f3;
+  overflow: visible;
+}
+
+.string {
+  fill: #d0fdf8;
+}
+
+.ctrl {
+  cursor: move;
+  fill: #000;
+}
+		
+	</style>
+</head>
+<body>
+
+
+<svg x="0px" y="0px"
+   width="1000px" height="1000px" viewBox="0 0 1000 1000">
+
+<path class='string' fill="#27AAE1" d="M500,1000 c0,0, 0-160,0-200 c0-55, 0-145,0-200 c0-50, 0-150,0-200 c0-50, 0-150,0-200 c0-50-0-200,0-200h500v1000H500z"/>
+
+<circle class='ctrl ctrl--start' cx="500" cy="200" r="6"/>
+<circle class='ctrl ctrl--mid' cx="500" cy="400" r="6"/>
+<circle class='ctrl ctrl--miid' cx="500" cy="600" r="6"/>
+<circle class='ctrl ctrl--end' cx="500" cy="800" r="6"/>
+</svg>
+
+<script>
+var svg = document.querySelector('svg'), 
+    r, s, w, h, 
+    vb = svg.getAttribute('viewBox').split(' '), 
+    vb_w = ~~vb[2], vb_h = ~~vb[3], 
+    vb_x = ~~vb[0], vb_y = ~~vb[1], 
+    ctrl_pts = {}, 
+    chord = svg.querySelector('.string'), 
+    dragging = false, dragged = null, 
+    mid_pt = {};
+    var allAttrs = chord.getAttribute('d').split(' ')
+
+
+var getCtrlType = function(str) {
+  return str.match(/ctrl\-\-[a-z]*/)[0].split('--')[1];
+};
+
+var initSVGCanvas = function() {
+  r = svg.getBoundingClientRect();
+  s = getComputedStyle(svg);
+  w = ~~s.width.split('px')[0];
+  h = ~~s.height.split('px')[0];
+};
+
+var initDemo = function() {
+  var ctrl_els = svg.querySelectorAll('.ctrl'), 
+      n = ctrl_els.length, 
+      type;
+
+  for(var i = 0; i < n; i++) {
+    type = getCtrlType(ctrl_els[i].className.baseVal);
+    
+    ctrl_pts[type] = {};
+    ctrl_pts[type].el = ctrl_els[i];
+    ctrl_pts[type].coord = {
+      'x': ctrl_els[i].getAttribute('cx'), 
+      'y': ctrl_els[i].getAttribute('cy')
+    };
+    console.log(ctrl_pts[type].coord);
+  }
+  
+  modifyString();
+};
+
+var modifyString = function(o) {
+  var d = '';
+  
+  var dot1 = ~~ctrl_pts['start'].coord.x;
+  var dot2 = ~~ctrl_pts['mid'].coord.x;
+  var dot3 = ~~ctrl_pts['miid'].coord.x;
+  var dot4 = ~~ctrl_pts['end'].coord.x;
+  
+  console.log(dot1);
+  console.log(dot2);
+  console.log(dot3);
+  console.log(dot4);
+
+d += 'M500,1000 S'
++dot4+',850,'+dot4+',800 S'
++dot3+',650,'+dot3+',600 S'
++dot2+',450,'+dot2+',400 S'
++dot1+',250,'+dot1+',200S500,0,500,0h500v1000H500z';
+
+  chord.setAttribute('d', d);
+
+};
+
+var moveControlPoint = function(e) {
+  var x = Math.round((e.clientX - r.left)*vb_w/w + vb_x), 
+      y = Math.round((e.clientY - r.top)*vb_h/h + vb_y), 
+      ctrl_point_type = getCtrlType(dragged.className.baseVal), 
+      v_pt = {};
+    
+  dragged.setAttribute('cx', x);
+  //dragged.setAttribute('cy', y);
+
+  ctrl_pts[ctrl_point_type].coord = { 'x': x, 'y': y };
+  
+  modifyString();
+};
+
+initSVGCanvas();
+initDemo();
+
+addEventListener('mousedown', function(e) {
+  var t = e.target;
+  
+  /* not using classList because IE :( */
+  /* bug filed: */
+  /* https://connect.microsoft.com/IE/feedback/details/1046039 */
+  if(t.className.baseVal.indexOf('ctrl') != -1) {
+    dragging = true;
+    dragged = t;
+  }
+}, false);
+
+addEventListener('mouseup', function() {  
+  dragging = false;
+  dragged = null;
+}, false);
+
+addEventListener('mousemove', function(e) {  
+  if(dragging) { moveControlPoint(e); }
+}, false);
+
+addEventListener('resize', initSVGCanvas, false);
+
+</script>
+
+</body>
+</html>
